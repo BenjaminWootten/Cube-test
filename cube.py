@@ -8,6 +8,7 @@ from dataclasses import dataclass
 class World:
     angle: float
     vertices: list[DesignerObject]
+    lines: list[DesignerObject]
 
 scale = 100
 circle_pos = [get_width()/2, get_height()/2]
@@ -30,10 +31,21 @@ points.append(np.matrix([1, -1, -1]))
 points.append(np.matrix([1, 1, -1]))
 points.append(np.matrix([-1, 1, -1]))
 
+# sets number of projected points to equal regular 3d points
+projected_points = [
+    [n, n] for n in range(len(points))
+]
+
+
+def connect_points(i, j, points) -> DesignerObject:
+    return line("black", points[i][0], points[i][1], points[j][0], points[j][1])
+
+
 
 def create_World() -> World:
     vertices = []
-    for point in points:
+    lines = []
+    for index, point in enumerate(points):
         # @ is the matrix multiplication operator
         # Use transpose to change point from 1x3 to 3x1 matrix to make multiplication with 2d matrix compatible
         projected2d = projection_matrix @ point.transpose()
@@ -43,7 +55,24 @@ def create_World() -> World:
 
         vertices.append(circle("black", 5, x, y))
 
-    return World(0.0, vertices)
+        projected_points[index] = [x, y]
+
+    lines.append(connect_points(0, 1, projected_points))
+    lines.append(connect_points(1, 2, projected_points))
+    lines.append(connect_points(2, 3, projected_points))
+    lines.append(connect_points(3, 0, projected_points))
+
+    lines.append(connect_points(4, 5, projected_points))
+    lines.append(connect_points(5, 6, projected_points))
+    lines.append(connect_points(6, 7, projected_points))
+    lines.append(connect_points(7, 4, projected_points))
+
+    lines.append(connect_points(0, 4, projected_points))
+    lines.append(connect_points(1, 5, projected_points))
+    lines.append(connect_points(2, 6, projected_points))
+    lines.append(connect_points(3, 7, projected_points))
+
+    return World(0.0, vertices, lines)
 
 
 def main_loop(world: World):
@@ -69,8 +98,6 @@ def main_loop(world: World):
         [0, 0, 1]
     ])
 
-    point1 = [0, 0]
-    drawline = False
 
     for index, point in enumerate(points):
 
@@ -88,8 +115,30 @@ def main_loop(world: World):
         x = projected2d[0, 0] * scale + circle_pos[0]
         y = projected2d[1, 0] * scale + circle_pos[1]
 
+        projected_points[index] = [x, y]
+
+
         world.vertices[index].x = x
         world.vertices[index].y = y
+
+    for line in world.lines:
+        destroy(line)
+    world.lines[0] = connect_points(0, 1, projected_points)
+    world.lines[1] = connect_points(1, 2, projected_points)
+    world.lines[2] = connect_points(2, 3, projected_points)
+    world.lines[3] = connect_points(3, 0, projected_points)
+
+    world.lines[4] = connect_points(4, 5, projected_points)
+    world.lines[5] = connect_points(5, 6, projected_points)
+    world.lines[6] = connect_points(6, 7, projected_points)
+    world.lines[7] = connect_points(7, 4, projected_points)
+
+    world.lines[8] = connect_points(0, 4, projected_points)
+    world.lines[9] = connect_points(1, 5, projected_points)
+    world.lines[10] = connect_points(2, 6, projected_points)
+    world.lines[11] = connect_points(3, 7, projected_points)
+
+
 
 
 
