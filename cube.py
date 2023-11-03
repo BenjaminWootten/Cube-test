@@ -72,8 +72,6 @@ def scale(world: World, key):
 def main_loop(world: World):
 
 
-
-
     rotation_x = np.matrix([
         [1, 0, 0],
         [0, m.cos(world.angle_x), -m.sin(world.angle_x)],
@@ -145,9 +143,22 @@ def main_loop(world: World):
     # Code for rotating cube with mouse pan
     if world.is_clicking:
         world.angle_y += -(get_mouse_x() - world.click_pos[0])/500
+
+        #if (world.angle_y >= 0 and world.angle_y%6 < 0.75) or world.angle_y%6 >= 5.25:
         world.angle_x += (get_mouse_y() - world.click_pos[1])/500
+        # elif world.angle_y%6 >= 0.75 and world.angle_y < 2.25:
+        #     world.angle_z += (get_mouse_y() - world.click_pos[1]) / 500
+        # elif world.angle_y%6 >= 2.25 and world.angle_y < 3.75:
+        #     world.angle_x += -(get_mouse_y() - world.click_pos[1]) / 500
+        # elif world.angle_y%6 >= 3.75 and world.angle_y < 5.25:
+        #     world.angle_z += -(get_mouse_y() - world.click_pos[1]) / 500
+
         world.click_pos[0] = get_mouse_x()
         world.click_pos[1] = get_mouse_y()
+
+    print(world.angle_x, world.angle_y, world.angle_z)
+    #world.angle_z += 0.01
+
 
 
 
@@ -159,6 +170,7 @@ def create_World() -> World:
     lines = []
     faces = []
     starting_scale = 100.0
+
     for index, point in enumerate(points):
         # @ is the matrix multiplication operator
         # Use transpose to change point from 1x3 to 3x1 matrix to make multiplication with 2d matrix compatible
@@ -183,7 +195,6 @@ def create_World() -> World:
         faces.append(create_face("red", p, (p + 1) % 4, (p + 1) % 4 + 4, p + 4, projected_points))
 
     return World(0.0, 0.0, 0.0, starting_scale, vertices, lines, faces, [0,0], False)
-
 
 
 
