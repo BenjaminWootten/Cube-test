@@ -10,7 +10,6 @@ class World:
     angle_y: float
     angle_z: float
     scale: int
-    is_growing: bool
     vertices: list[DesignerObject]
     lines: list[DesignerObject]
     faces: list[DesignerObject]
@@ -54,35 +53,7 @@ def create_face(color: str, i: int, j: int, k: int, l: int, points) -> DesignerO
 
 
 
-def create_World() -> World:
-    vertices = []
-    lines = []
-    faces = []
-    starting_scale = 100.0
-    for index, point in enumerate(points):
-        # @ is the matrix multiplication operator
-        # Use transpose to change point from 1x3 to 3x1 matrix to make multiplication with 2d matrix compatible
-        projected2d = projection_matrix @ point.transpose()
 
-        x = projected2d[0, 0] * starting_scale + circle_pos[0]
-        y = projected2d[1, 0] * starting_scale + circle_pos[1]
-
-        vertices.append(circle("black", 5, x, y))
-
-        projected_points[index] = [x, y]
-
-
-    for p in range(4):
-        lines.append(connect_points(p, (p+1) % 4, projected_points))
-        lines.append(connect_points(p+4, (p + 1) % 4 + 4, projected_points))
-        lines.append(connect_points(p, p+4, projected_points))
-
-    faces.append(create_face("red", 0, 1, 2, 3, projected_points))
-    faces.append(create_face("red", 4, 5, 6, 7, projected_points))
-    for p in range(4):
-        faces.append(create_face("red", p, (p + 1) % 4, (p + 1) % 4 + 4, p + 4, projected_points))
-
-    return World(0.0, 0.0, 0.0, starting_scale, True, vertices, lines, faces, [0,0], False)
 
 
 def pan_start(world: World, x, y):
@@ -92,21 +63,15 @@ def pan_start(world: World, x, y):
 def pan_end(world: World):
     world.is_clicking = False
 
-
+def scale(world: World, key):
+    if key == 'up':
+        world.scale += 25
+    if key == 'down':
+        world.scale -= 25
 
 def main_loop(world: World):
 
 
-
-    if world.is_growing:
-        world.scale += 1
-    else:
-        world.scale -= 1
-
-    if world.scale > 200:
-        world.is_growing = False
-    elif world.scale < 50:
-        world.is_growing = True
 
 
     rotation_x = np.matrix([
@@ -177,13 +142,47 @@ def main_loop(world: World):
         world.vertices[index] = circle("black", 5, projected_point[0], projected_point[1])
 
 
+    # Code for rotating cube with mouse pan
     if world.is_clicking:
-        world.angle_y += (get_mouse_x() - world.click_pos[0])/1000
-        world.angle_x += (get_mouse_y() - world.click_pos[1])/1000
+        world.angle_y += -(get_mouse_x() - world.click_pos[0])/500
+        world.angle_x += (get_mouse_y() - world.click_pos[1])/500
         world.click_pos[0] = get_mouse_x()
         world.click_pos[1] = get_mouse_y()
 
 
+
+
+
+
+def create_World() -> World:
+    vertices = []
+    lines = []
+    faces = []
+    starting_scale = 100.0
+    for index, point in enumerate(points):
+        # @ is the matrix multiplication operator
+        # Use transpose to change point from 1x3 to 3x1 matrix to make multiplication with 2d matrix compatible
+        projected2d = projection_matrix @ point.transpose()
+
+        x = projected2d[0, 0] * starting_scale + circle_pos[0]
+        y = projected2d[1, 0] * starting_scale + circle_pos[1]
+
+        vertices.append(circle("black", 5, x, y))
+
+        projected_points[index] = [x, y]
+
+
+    for p in range(4):
+        lines.append(connect_points(p, (p+1) % 4, projected_points))
+        lines.append(connect_points(p+4, (p + 1) % 4 + 4, projected_points))
+        lines.append(connect_points(p, p+4, projected_points))
+
+    faces.append(create_face("red", 0, 1, 2, 3, projected_points))
+    faces.append(create_face("red", 4, 5, 6, 7, projected_points))
+    for p in range(4):
+        faces.append(create_face("red", p, (p + 1) % 4, (p + 1) % 4 + 4, p + 4, projected_points))
+
+    return World(0.0, 0.0, 0.0, starting_scale, vertices, lines, faces, [0,0], False)
 
 
 
@@ -196,5 +195,6 @@ def main_loop(world: World):
 when('starting', create_World)
 when('input.mouse.down', pan_start)
 when('input.mouse.up', pan_end)
+when('typing', scale)
 when('updating', main_loop)
 start()
