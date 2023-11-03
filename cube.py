@@ -7,7 +7,8 @@ from dataclasses import dataclass
 @dataclass
 class World:
     angle: float
-    scale: float
+    scale: int
+    growing: bool
     vertices: list[DesignerObject]
     lines: list[DesignerObject]
     faces: list[DesignerObject]
@@ -77,7 +78,7 @@ def create_World() -> World:
     for p in range(4):
         faces.append(create_face("red", p, (p + 1) % 4, (p + 1) % 4 + 4, p + 4, projected_points))
 
-    return World(0.0, starting_scale, vertices, lines, faces)
+    return World(0.0, starting_scale, True, vertices, lines, faces)
 
 
 
@@ -85,6 +86,16 @@ def main_loop(world: World):
 
 
     world.angle += 0.01
+
+    if world.growing:
+        world.scale += 1
+    else:
+        world.scale -= 1
+
+    if world.scale > 200:
+        world.growing = False
+    elif world.scale < 50:
+        world.growing = True
 
 
     rotation_x = np.matrix([
@@ -148,6 +159,11 @@ def main_loop(world: World):
         world.lines[p] = connect_points(p, (p+1) % 4, projected_points)
         world.lines[p+4] = connect_points(p+4, (p + 1) % 4 + 4, projected_points)
         world.lines[p+8] = connect_points(p, p+4, projected_points)
+
+    for vertex in world.vertices:
+        destroy(vertex)
+    for index, projected_point in enumerate(projected_points):
+        world.vertices[index] = circle("black", 5, projected_point[0], projected_point[1])
 
 
 
