@@ -6,12 +6,16 @@ from dataclasses import dataclass
 
 @dataclass
 class World:
-    angle: float
+    angle_x: float
+    angle_y: float
+    angle_z: float
     scale: int
-    growing: bool
+    is_growing: bool
     vertices: list[DesignerObject]
     lines: list[DesignerObject]
     faces: list[DesignerObject]
+    click_pos: list[int]
+    is_clicking: bool
 
 circle_pos = [get_width()/2, get_height()/2]
 
@@ -78,41 +82,48 @@ def create_World() -> World:
     for p in range(4):
         faces.append(create_face("red", p, (p + 1) % 4, (p + 1) % 4 + 4, p + 4, projected_points))
 
-    return World(0.0, starting_scale, True, vertices, lines, faces)
+    return World(0.0, 0.0, 0.0, starting_scale, True, vertices, lines, faces, [0,0], False)
+
+
+def pan_start(world: World, x, y):
+    world.click_pos = [x, y]
+    world.is_clicking = True
+
+def pan_end(world: World):
+    world.is_clicking = False
 
 
 
 def main_loop(world: World):
 
 
-    world.angle += 0.01
 
-    if world.growing:
+    if world.is_growing:
         world.scale += 1
     else:
         world.scale -= 1
 
     if world.scale > 200:
-        world.growing = False
+        world.is_growing = False
     elif world.scale < 50:
-        world.growing = True
+        world.is_growing = True
 
 
     rotation_x = np.matrix([
         [1, 0, 0],
-        [0, m.cos(world.angle), -m.sin(world.angle)],
-        [0, m.sin(world.angle), m.cos(world.angle)]
+        [0, m.cos(world.angle_x), -m.sin(world.angle_x)],
+        [0, m.sin(world.angle_x), m.cos(world.angle_x)]
     ])
 
     rotation_y = np.matrix([
-        [m.cos(world.angle), 0, m.sin(world.angle)],
+        [m.cos(world.angle_y), 0, m.sin(world.angle_y)],
         [0, 1, 0],
-        [-m.sin(world.angle), 0, m.cos(world.angle)]
+        [-m.sin(world.angle_y), 0, m.cos(world.angle_y)]
     ])
 
     rotation_z = np.matrix([
-        [m.cos(world.angle), -m.sin(world.angle), 0],
-        [m.sin(world.angle), m.cos(world.angle), 0],
+        [m.cos(world.angle_z), -m.sin(world.angle_z), 0],
+        [m.sin(world.angle_z), m.cos(world.angle_z), 0],
         [0, 0, 1]
     ])
 
@@ -166,6 +177,16 @@ def main_loop(world: World):
         world.vertices[index] = circle("black", 5, projected_point[0], projected_point[1])
 
 
+    if world.is_clicking:
+        world.angle_y += (get_mouse_x() - world.click_pos[0])/1000
+        world.angle_x += (get_mouse_y() - world.click_pos[1])/1000
+        world.click_pos[0] = get_mouse_x()
+        world.click_pos[1] = get_mouse_y()
+
+
+
+
+
 
 
 
@@ -173,5 +194,7 @@ def main_loop(world: World):
 
 
 when('starting', create_World)
+when('input.mouse.down', pan_start)
+when('input.mouse.up', pan_end)
 when('updating', main_loop)
 start()
